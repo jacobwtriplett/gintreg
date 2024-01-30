@@ -6,8 +6,8 @@ program define gintregplot, rclass
         */      *               /* -graph twoway- options
         */      ] 
         
-        if ("`e(cmd)'"!="_gintreg") {
-                di as err "_gintreg was not the last estimation command"
+        if ("`e(cmd)'"!="gintreg") {
+                di as err "gintreg was not the last estimation command"
                 exit 301
         }
         
