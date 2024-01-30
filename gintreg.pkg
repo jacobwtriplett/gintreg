@@ -1,0 +1,18 @@
+v 3
+d 'GINTREG': module to perform generalized interval regression
+d [description]
+d [keywords -f {}.key]
+d [stata version]
+d [distribution date]
+d [authors, support]
+
+f gintreg.ado
+f gintreg.sthlp
+f gintreg_p.ado
+f gintregplot.ado
+f intllf_gb2.ado
+f intllf_ggamma.ado
+f intllf_lognormal.ado
+f intllf_normal.ado
+f intllf_sged.ado
+f intllf_sgt.ado
