@@ -657,7 +657,7 @@ program define GetDistOpts, rclass
         else if ("`1'"=="br12") {
                 local title "Burr-12 interval regression"
                 local llf "intllf_gb2"
-                local auxnames "lnsigma p q""
+                local auxnames "lnsigma p q"
                 constraint free
                 constraint define `r(free)' [p]_cons=1
                 local auxconstr "`r(free)'"

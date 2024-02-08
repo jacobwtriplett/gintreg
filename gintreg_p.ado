@@ -1,6 +1,6 @@
 capture program drop gintreg_p
 program define gintreg_p
-        syntax newvarname [if] [in] [, xb stdp noOFFset]
+        syntax newvarname [if] [in] [, noOFFset]
 
         if ("`e(cmd)'"!="gintreg") {
                 di as err "gintreg was not the last estimation command"
@@ -9,42 +9,24 @@ program define gintreg_p
         
         marksample doit, novarlist
         
-        if ("`stdp'"!="") {
-                _predict `typlist' `varlist' if `doit', stdp `offset'
-                label var `varlist' "S.E. of the prediction"
-                exit
-        }
-        
-        tempvar ones 
-        gen byte `ones' = 1 if `doit'
-        
         local dist     "`e(distribution)'"
         local auxnames "`e(auxnames)'"
         
         // symmetric distributions
         if inlist("`dist'","","normal","ged","laplace","gt","t") {
-                _predict `typlist' `varlist' if `doit', xb
+                _predict `typlist' `varlist' if `doit', xb `offset'
                 exit
         }
         
-        // possibly asymmetric distributions...
-        // ... find Xb for individual parameters
-        // TODO: REPLACE WITH
-        // foreach ... { _predict double ``eqn'', xb eq(`eqn')}
-        tempname mX mXmodel mXlnsigma mXsigma mXp mXq mXlambda
-        tempvar Xmodel Xlnsigma Xsigma Xp Xq Xlambda predicted    
+        // possibly asymmetric distributions
         foreach eqn in model `auxnames' {
-                if ("`e(`eqn'_nocns)'"=="") {
-                        mkmat `e(`eqn'vars)' `ones', mat(`mX')
-                }
-                else    mkmat `e(`eqn'vars)', mat(`mX')
-                mat `mX`eqn'' = e(b)[1,"`eqn':"]'
-                mat `mX`eqn'' = `mX'*`mX`eqn''
-                svmat `mX`eqn'', names(`X`eqn'')
+                tempvar X`eqn'
+                qui _predict double `X`eqn'' if `doit', xb eq(`eqn') `offset'
         }
+        tempvar Xsigma
         qui gen double `Xsigma' = exp(`Xlnsigma') if `doit'
         
-        // ... then calculate predicted values
+        tempvar predicted
         if inlist("`dist'","snormal","laplace","slaplace","ged","sged") {
                 qui gen `predicted' = `Xmodel'+2*`Xlambda'*`Xsigma'           /*
                 */ *(exp(lngamma(2/`Xp'))/exp(lngamma(1/`Xp')))        if `doit'
@@ -67,5 +49,5 @@ program define gintreg_p
                 */ *[exp(lngamma(`Xp'+`Xsigma'))*exp(lngamma(`Xq'-`Xsigma'))  /*
                 */ /(exp(lngamma(`Xp'))*exp(lngamma(`Xq')))]           if `doit'
         }
-        qui gen `typlist' `varlist' = `predicted' if `doit'
+        gen `typlist' `varlist' = `predicted' if `doit'
 end
