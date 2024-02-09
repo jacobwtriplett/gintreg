@@ -25,7 +25,7 @@
 {it:{help depvar:depvar2}}
 [{indepvars}]
 {ifin}
-[{it:{help intreg##weight:weight}}]
+[{it:{help gintreg##weight:weight}}]
 [{cmd:,} {it:options}]
 
 {pstd}
@@ -40,7 +40,7 @@
              missing{space 26}{cmd:.}{space 8}{cmd:.} 
              {hline 46}
 
-{synoptset 31 tabbed}{...}
+{synoptset 32 tabbed}{...}
 {synopthdr}
 {synoptline}
 {syntab :Model}
@@ -70,7 +70,6 @@ or {opt jack:knife}{p_end}
 {synopt :{opth cluster(varname)}}cluster standard errors with respect to sampling
 unit {varname}{p_end}
 
-
 {syntab :Reporting}
 {synopt :{opt gini}}display gini coefficient; operable with {opt dist:ribution(weibull | gamma | br3 | br12)}{p_end}
 {synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}
@@ -88,9 +87,10 @@ INCLUDE help shortdes-coeflegend
 {synoptline}
 
 {marker distname}{...}
-{synoptset 27}{...}
+{synoptset 32 tabbed}{...}
 {synopthdr:distname}
 {synoptline}
+{syntab :SGT family}
 {synopt :{opt normal}}normal distribution; the default{p_end}
 {synopt :{opt snormal}}skewed normal distribution{p_end}
 {synopt :{opt laplace}}Laplace distribution{p_end}
@@ -101,6 +101,8 @@ INCLUDE help shortdes-coeflegend
 {synopt :{opt st}}skewed t distribution{p_end}
 {synopt :{opt gt}}generalized t distribution{p_end}
 {synopt :{opt sgt}}skewed generalized t distribution{p_end}
+
+{syntab :GB2 family}
 {synopt :{opt lognormal}}lognormal distribution{p_end}
 {synopt :{opt lnormal}}synonym for {cmd:lognormal}{p_end}
 {synopt :{opt weibull}}Weibull distribution{p_end}
@@ -121,7 +123,7 @@ time-series operators; see {help tsvarlist}.{p_end}
 {opt aweight}s, {opt fweight}s, {opt iweight}s, and {opt pweight}s are
 allowed; see {help weight}.{p_end}
 {p 4 6 2}
-See {help gintreg:postestimation:postestimation} for features
+See {help gintreg##postestimation:postestimation syntax} for features
 available after estimation.{p_end}
 
 
@@ -284,30 +286,18 @@ convergence issues.
 {pstd}
 The following built-in postestimation commands are also available after {cmd:gintreg}:
 
-TODO test these and remove those which fail
-
 {synoptset 17 tabbed}{...}
 {p2coldent :Command}Description{p_end}
 {synoptline}
 INCLUDE help post_contrast
 INCLUDE help post_estatic
-INCLUDE help post_estatsum
 INCLUDE help post_estatvce
-INCLUDE help post_svy_estat
 INCLUDE help post_estimates
 INCLUDE help post_etable
-INCLUDE help post_hausman_star
 INCLUDE help post_lincom
-INCLUDE help post_lrtest_star
-{synopt:{helpb intreg_postestimation##margins:margins}}marginal
-        means, predictive margins, marginal effects, and average marginal
-        effects{p_end}
-INCLUDE help post_marginsplot
+INCLUDE help post_lrtest
 INCLUDE help post_nlcom
-{synopt :{helpb intreg postestimation##predict:predict}}{findalias p_intreg}{p_end}
-INCLUDE help post_predictnl
 INCLUDE help post_pwcompare
-INCLUDE help post_suest
 INCLUDE help post_test
 INCLUDE help post_testnl
 {synoptline}
@@ -315,6 +305,18 @@ INCLUDE help post_testnl
 {p 4 6 2}
 
      
+{marker missing_features}
+{title:Missing features}
+
+{phang}(If you are interested in discussing these or others, feel free to {help gintreg##authors:contact me})
+
+{p2colset 8 12 12 2}{...}
+{p2col: -}Incorporate score equations into log-likelihood files; this would improve convergence and enable many useful postestimation features{p_end}
+{p2col: -}More postestimation commands (lincom, margins, suest, hausman){p_end}
+{p2colreset}{...}
+
+
+
 {marker examples}{...}
 {title:Examples}
 

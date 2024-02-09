@@ -64,7 +64,7 @@ program define gintregplot, rclass
         
         // clean up 
         if (!_rc) restore
-        return local graphfn "`graphfn'"
+        return local graphfn "`graphfn', `options'"
         
         // draw graph
         if ("`hist'"!="") {
