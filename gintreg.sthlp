@@ -75,7 +75,7 @@ unit {varname}{p_end}
 {synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}
 {p_end}
 {synopt :{opt nocnsr:eport}}do not display constraints{p_end}
-{synopt :{it:{help intreg##display_options:display_options}}}control
+{synopt :{it:{help gintreg##display_options:display_options}}}control
 INCLUDE help shortdes-displayoptall
 
 {syntab :Maximization}
@@ -103,13 +103,12 @@ INCLUDE help shortdes-coeflegend
 {synopt :{opt sgt}}skewed generalized t distribution{p_end}
 
 {syntab :GB2 family}
-{synopt :{opt lognormal}}lognormal distribution{p_end}
-{synopt :{opt lnormal}}synonym for {cmd:lognormal}{p_end}
+{synopt :{opt lognormal | lnormal}}lognormal distribution{p_end}
 {synopt :{opt weibull}}Weibull distribution{p_end}
 {synopt :{opt gamma}}gamma distribution{p_end}
 {synopt :{opt ggamma}}generalized gamma distribution{p_end}
-{synopt :{opt br3}}Burr 3 distribution{p_end}
-{synopt :{opt br12}}Burr 12 distribution{p_end}
+{synopt :{opt br3 | dagum}}Burr 3 or Dagum distribution{p_end}
+{synopt :{opt br12 | sm}}Burr 12 or Singh-Maddala distribution{p_end}
 {synopt :{opt gb2}}generalized beta of the second kind distribution{p_end}
 {synoptline}
 {p2colreset}{...}
@@ -119,6 +118,7 @@ INCLUDE help fvvarlist2
 {p 4 6 2}
 {it:depvar1}, {it:depvar2}, {it:indepvars}, and {it:varlist} may contain
 time-series operators; see {help tsvarlist}.{p_end}
+{marker weight}{...}
 {p 4 6 2}
 {opt aweight}s, {opt fweight}s, {opt iweight}s, and {opt pweight}s are
 allowed; see {help weight}.{p_end}
@@ -131,7 +131,7 @@ available after estimation.{p_end}
 {title:Description}
 
 {pstd}
-{cmd:gintreg} fits a linear model with an outcome measured as
+{cmd:gintreg} fits a linear model with a possibly nonnormal disturbance and with an outcome measured as
 point data, interval data, left-censored data, or right-censored data.  As
 such, it is a generalization of the models fit by {helpb intreg} and yields
 identical estimates to {helpb intreg} when the normal distribution is specified.  
@@ -207,7 +207,7 @@ INCLUDE help vce_asymptall
 {opt robust} is a synonym for {cmd:vce(robust)}.{p_end}
 
 {phang}
-{opth cluster(varlist)} is a synonym for {cmd:vce(cluster {help varlist})}.{p_end}
+{opt cluster(clustvar)} is a synonym for {cmd:vce(cluster }{it:clustvar}{cmd:)}.{p_end}
 
 {dlgtab:Reporting}
 
@@ -252,7 +252,7 @@ Setting the optimization type to {cmd:technique(bhhh)} resets the default
 {it:vcetype} to {cmd:vce(opg)}.
 
 {pstd}
-The following options are available with {opt intreg} but are not shown in the
+The following options are available with {opt gintreg} but are not shown in the
 dialog box:
 
 {phang}
@@ -264,7 +264,7 @@ dialog box:
 {title:Remarks}
 
 {pstd}
-If convergence is not being achieved, try using the options {opt diff:icult} 
+If convergence is slow or not being achieved, try using the options {opt diff:icult} 
 and/or {opth from:(gintreg##distname:distname)}, where 
 {it:{help gintreg##distname:distname}} is a nested distribution of the one with
 convergence issues. 
@@ -321,9 +321,6 @@ INCLUDE help post_testnl
 {title:Examples}
 
 {pstd}
-TODO! 
-
-
 We have a dataset containing wages, truncated and in categories.  Some of
 the observations on wages are
 
@@ -334,22 +331,20 @@ the observations on wages are
 {pstd}Setup{p_end}
 {phang2}{cmd:. webuse intregxmpl}{p_end}
 
-{pstd}Interval regression{p_end}
-{phang2}{cmd:. intreg wage1 wage2 age c.age#c.age nev_mar rural school tenure}
+{pstd}GB2 interval regression using Burr3 to find starting values{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure,}
+           {cmd:dist(gb2) from(br3)}
 
-{pstd}Same as above, but suppress constant term{p_end}
-{phang2}{cmd:. intreg wage1 wage2 age c.age#c.age nev_mar rural school tenure,}
-           {cmd:noconstant}
+{pstd}Same as above, but with heteroskedasticity in lnsigma{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure,}
+           {cmd:dist(gb2) from(br3) lnsimga(age age2 nev_mar rural school tenure)}
+ 
 
 
 {marker results}{...}
 {title:Stored results}
 
-{pstd}
-TODO!
-
-
-{cmd:intreg} stores the following in {cmd:e()}:
+{pstd}{cmd:gintreg} stores the following in {cmd:e()}:
 
 {synoptset 23 tabbed}{...}
 {p2col 5 23 26 2: Scalars}{p_end}
@@ -359,39 +354,47 @@ TODO!
 {synopt:{cmd:e(N_rc)}}number of right-censored observations{p_end}
 {synopt:{cmd:e(N_int)}}number of interval observations{p_end}
 {synopt:{cmd:e(k)}}number of parameters{p_end}
-{synopt:{cmd:e(k_aux)}}number of auxiliary parameters{p_end}
+{synopt:{cmd:e(k_aux_eq)}}number of auxiliary equations{p_end}
 {synopt:{cmd:e(k_eq)}}number of equations in {cmd:e(b)}{p_end}
 {synopt:{cmd:e(k_eq_model)}}number of equations in overall model test{p_end}
 {synopt:{cmd:e(k_dv)}}number of dependent variables{p_end}
 {synopt:{cmd:e(df_m)}}model degrees of freedom{p_end}
 {synopt:{cmd:e(ll)}}log likelihood{p_end}
-{synopt:{cmd:e(ll_0)}}log likelihood, constant-only model{p_end}
 {synopt:{cmd:e(N_clust)}}number of clusters{p_end}
-{synopt:{cmd:e(chi2)}}chi-squared{p_end}
 {synopt:{cmd:e(p)}}{it:p}-value for model chi-squared test{p_end}
-{synopt:{cmd:e(sigma)}}sigma{p_end}
+{synopt:{cmd:e(gini_coef)}}gini coefficient{p_end}
+{synopt:{cmd:e(b_sigma)}}estimated sigma{p_end}
 {synopt:{cmd:e(se_sigma)}}standard error of sigma{p_end}
+{synopt:{cmd:e(b_lambda)}}estimated lambda{p_end}
+{synopt:{cmd:e(se_lambda)}}standard error of lambda{p_end}
+{synopt:{cmd:e(b_p)}}estimated p{p_end}
+{synopt:{cmd:e(se_p)}}standard error of p{p_end}
+{synopt:{cmd:e(b_q)}}estimated q{p_end}
+{synopt:{cmd:e(se_q)}}standard error of q{p_end}
 {synopt:{cmd:e(rank)}}rank of {cmd:e(V)}{p_end}
-{synopt:{cmd:e(rank0)}}rank of {cmd:e(V)} for constant-only model{p_end}
 {synopt:{cmd:e(ic)}}number of iterations{p_end}
 {synopt:{cmd:e(rc)}}return code{p_end}
 {synopt:{cmd:e(converged)}}{cmd:1} if converged, {cmd:0} otherwise{p_end}
 
 {p2col 5 23 26 2: Macros}{p_end}
-{synopt:{cmd:e(cmd)}}{cmd:intreg}{p_end}
+{synopt:{cmd:e(cmd)}}{cmd:gintreg}{p_end}
 {synopt:{cmd:e(cmdline)}}command as typed{p_end}
+{synopt:{cmd:e(distribution)}}distribution as specified{p_end}
 {synopt:{cmd:e(depvar)}}names of dependent variables{p_end}
 {synopt:{cmd:e(wtype)}}weight type{p_end}
 {synopt:{cmd:e(wexp)}}weight expression{p_end}
 {synopt:{cmd:e(title)}}title in estimation output{p_end}
 {synopt:{cmd:e(clustvar)}}name of cluster variable{p_end}
 {synopt:{cmd:e(offset)}}linear offset variable{p_end}
+{synopt:{cmd:e(gini)}}{cmd:gini}, if {cmd:gini} specified{p_end}
 {synopt:{cmd:e(chi2type)}}{cmd:Wald} or {cmd:LR}; type of model chi-squared
         test{p_end}
 {synopt:{cmd:e(vce)}}{it:vcetype} specified in {cmd:vce()}{p_end}
 {synopt:{cmd:e(vcetype)}}title used to label Std. err.{p_end}
-{synopt:{cmd:e(het)}}{cmd:heteroskedasticity}, if {cmd:het()} specified{p_end}
-{synopt:{cmd:e(ml_score)}}program used to implement {cmd:scores}{p_end}
+{synopt:{cmd:e(het_lnsigma)}}{cmd:heteroskedasticity}, if {cmd:lnsigma()} specified{p_end}
+{synopt:{cmd:e(het_lambda)}}{cmd:heteroskedasticity}, if {cmd:lambda()} specified{p_end}
+{synopt:{cmd:e(het_p)}}{cmd:heteroskedasticity}, if {cmd:p()} specified{p_end}
+{synopt:{cmd:e(het_q)}}{cmd:heteroskedasticity}, if {cmd:q()} specified{p_end}
 {synopt:{cmd:e(opt)}}type of optimization{p_end}
 {synopt:{cmd:e(which)}}{cmd:max} or {cmd:min}; whether optimizer is to perform
                          maximization or minimization{p_end}
@@ -400,7 +403,6 @@ TODO!
 {synopt:{cmd:e(technique)}}maximization technique{p_end}
 {synopt:{cmd:e(properties)}}{cmd:b V}{p_end}
 {synopt:{cmd:e(predict)}}program used to implement {cmd:predict}{p_end}
-{synopt:{cmd:e(marginsok)}}predictions allowed by {cmd:margins}{p_end}
 {synopt:{cmd:e(asbalanced)}}factor variables {cmd:fvset} as {cmd:asbalanced}{p_end}
 {synopt:{cmd:e(asobserved)}}factor variables {cmd:fvset} as {cmd:asobserved}{p_end}
 

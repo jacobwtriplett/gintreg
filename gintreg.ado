@@ -1,4 +1,4 @@
-*! version 3.8.0  22mar2018 // TODO: UPDATE (this if from intreg)
+*! version 3.0  26feb2024
 program define gintreg, eclass byable(onecall) ///
                         prop(svyb svyj svyr swml bayes)
         if _by() {
@@ -60,6 +60,7 @@ program Estimate, eclass byable(recall)
         */      p(string)               /* gintreg 
         */      q(string)               /* gintreg 
         */      lambda(string)          /* gintreg
+        */      gini                    /* gintreg
         */      CRITTYPE(passthru)      /*
         */      Verbose                 /*
         */      moptobj(passthru)       /* NOT DOCUMENTED
@@ -118,6 +119,12 @@ program Estimate, eclass byable(recall)
                         local `aux'_nocns "`r(constant)'"
                 }
         }
+        
+        if inlist("`distribution'","snormal","laplace","slaplace","ged", /*
+        */ "sged","t","st","gt","sgt") | inlist("`distribution'","","normal") {
+                local family "sgt"
+        } 
+        else    local family "gb2"
 
 /* Mark/markout. */
 
@@ -126,8 +133,7 @@ program Estimate, eclass byable(recall)
         mark `doit' [`weight'`exp'] `if' `in'
         qui replace `doit' = 0 if `y1'>=. & `y2'>=.
         
-        if inlist("`distribution'","lognormal","lnormal","weibull","gamma",   /*
-        */ "ggamma","br3","br12","gb2") {
+        if ("`family'"=="gb2") {
                 qui replace `doit' = 0 if (`y2'<=0)
         }
 
@@ -209,7 +215,7 @@ program Estimate, eclass byable(recall)
         }
 
         // alternate notation for gb2 tree (except lognormal)
-        if inlist("`distribution'","gb2","br12","br3","ggamma","gamma","weibull") {
+        if ("`family'"=="gb2" & !inlist("`distribution'","lognormal","lnormal")) {
                 if ("`lnsigma'"=="")    local diparm diparm(lnsigma, function(exp(-@)) derivative(-exp(-@)) label("a"))
                 if ("`rhs'"=="")        local diparm `diparm' diparm(model, exp label("b"))
         }
@@ -240,8 +246,8 @@ program Estimate, eclass byable(recall)
                 // fit preliminary model if from(distribution) specified...
                 if inlist("`from'","sged","ged","slaplace","laplace", ///
                           "snormal","sgt","gt","st","t")              ///
-                   | inlist("`from'","gb2","burr12","burr3","ggamma", ///
-                            "gamma","weibull")                        /// 
+                   | inlist("`from'","gb2","br12","sm","br3","dagum", ///
+                            "ggamma","gamma","weibull")               /// 
                    | inlist("`from'","","normal","lognormal","lnormal") { 
                 
                         // remove from() option from cmd
@@ -250,9 +256,14 @@ program Estimate, eclass byable(recall)
                         local i0 = subinstr("`i0'","(`distribution')","(`from')",1)
                         
                         if "`log'"=="" {
-                                di as txt _n "Fitting model with `from' distribution:"
+                                di _n "Fitting model with `from' distribution:"
                         }
-                        gintreg `i0' nodisplay
+                        quietly gintreg `i0'
+                        if "`log'"=="" {
+                                di "`e(title)'" _n as text "converged in "    /*
+                                */ as result "`e(ic)'" as text " iterations:" /*
+                                */ "  Log-likelihood = " as res %-20.5f `e(ll)'
+                        }
                         
                         tempname b0 bp bq
                         matrix `b0' = e(b)
@@ -287,8 +298,13 @@ program Estimate, eclass byable(recall)
 
                 if "`constant'"=="" { 
                         tempname b00
-                        matrix `b00' = (r(mean), ln(r(sd)), 1, 1, (r(mean)-r(p50))/r(sd))
+                        local b00_model = cond("`family'"=="sgt",r(mean),ln(r(mean)))
+                        local b00_lnsigma = cond("`family'"=="sgt",ln(r(sd)),1/r(sd))
+                        matrix `b00' = (`b00_model', `b00_lnsigma', 1, 1, (r(mean)-r(p50))/r(sd))
                         matrix colnames `b00' = model:_cons lnsigma:_cons p:_cons q:_cons lambda:_cons
+                        
+                        // when the constant-only is the full model
+                        if ("`rhs'"=="") local initopt init(`b00', skip)
                 }
                 
 /* Get initial values for the full model. */
@@ -317,14 +333,14 @@ program Estimate, eclass byable(recall)
 
 /* Fit constant-only model. */
 		
-                if "`constant'"=="" {
+                if ("`rhs'"!="" & "`constant'"=="") {
                         if "`log'"=="" {
                                 di as txt _n "Fitting constant-only model:"
                         }
                         
                         `vv' ///
                         ml model lf `llf'               /*
-                        */ (model: `y1' `y2' `idx'=)        /*
+                        */ (model: `y1' `y2' `idx'=)    /*
                         */ `auxeq_cns'                  /*
                         */ [`weight'`exp'] if `doit',   /*
                         */ init(`b00', skip)            /*
@@ -335,7 +351,7 @@ program Estimate, eclass byable(recall)
                         */ nopreserve                   /*
                         */ obs(`N')                     /*
                         */ maximize                     /*
-                        */ search(off)                   /* off
+                        */ search(off)                  /*
                         */ `robust'                     /*
                         */ nocnsnotes                   /*
                         */ `negh'
@@ -388,7 +404,6 @@ program Estimate, eclass byable(recall)
                 */ `initopt'                            /*
                 */ `mlopts'                             /*
                 */ `vce'                                /*
-                */ /*`score'*/                              /*
                 */ `contin'                             /*
                 */ noout                                /*
                 */ missing                              /*
@@ -396,13 +411,12 @@ program Estimate, eclass byable(recall)
                 */ nopreserve                           /*
                 */ obs(`N')                             /*
                 */ maximize                             /*
-                */ `search'                          /* off
+                */ `search'                             /*
                 */ `diparm'                             /*
                 */ `negh'                               /*
                 */ `moptobj'
 
-        ereturn local cmd
-        global S_E_cmd
+        ereturn local cmd "gintreg"
 
         ereturn scalar N_unc = `Nunc'
         ereturn scalar N_lc  = `Nlc'
@@ -412,45 +426,37 @@ program Estimate, eclass byable(recall)
         ereturn scalar k_eq     = `k_eq'
         ereturn scalar k_aux_eq = `k_aux_eq'
         
-        // the following are used by gintreg_p.ado
         ereturn local distribution "`distribution'" 
-        ereturn local depvars  "`y1' `y2'"
-        *ereturn local indepvars "`rhs'"
-        *ereturn local constant  "`constant'"
-        ereturn local modelvars "`rhs'"
-        ereturn local model_cns  "`constant'"
+        ereturn local depvar  "`y1' `y2'"
+        ereturn local indepvars "`rhs'"
+        ereturn local constant  "`constant'"
         ereturn local auxnames "`auxnames'"
-        ereturn local lnsigmavars "`lnsigma_var'"
-        ereturn local lnsigma_cns "`lnsigma_cns'"
-        ereturn local pvars "`p_var'"
-        ereturn local p_cns "`p_cns'"
-        ereturn local qvars "`q_var'"
-        ereturn local q_cns "`q_cns'"
-        ereturn local lambdavars "`lambda_var'"
-        ereturn local lambda_cns "`lambda_cns'"
         
 
         if strpos("`auxnames'","lnsigma") & ("`lnsigma'"=="") {
-                ereturn scalar sigma = exp([lnsigma]_cons)
+                ereturn scalar b_sigma = exp([lnsigma]_cons)
                 ereturn scalar se_sigma = exp([lnsigma]_cons)*[lnsigma]_se[_cons]
         }
         if strpos("`auxnames'","lambda") & ("`lambda'"=="") {
-                ereturn scalar lambda = tanh([lambda]_cons)
+                ereturn scalar b_lambda = tanh([lambda]_cons)
                 ereturn scalar se_lambda = tanh([lambda]_cons)*[lambda]_se[_cons]
         }
+        if strpos("`auxnames'","p") & ("`p'"=="") {
+                ereturn scalar b_p = [p]_cons
+                ereturn scalar se_p = [p]_cons*[p]_se[_cons]
+        }
+        if strpos("`auxnames'","q") & ("`q'"=="") {
+                ereturn scalar b_q = [q]_cons
+                ereturn scalar se_q = [q]_cons*[q]_se[_cons]
+        }
         
-        ereturn local predict "gintreg_p"
-        ereturn local marginsok default                 ///
-                                XB                      ///
-                                Pr(passthru)            ///
-                                E(passthru)             ///
-                                YStar(passthru)
-
         foreach aux of local auxnames {
                 if ("``aux''"!="") {
                         ereturn local het_`aux' "heteroskedasticity"
                 }
         }
+
+        ereturn local predict "gintreg_p"
 
         if "$S_BADLC"!="" {
                 ereturn scalar N_lcout = $S_BADLC
@@ -463,32 +469,51 @@ program Estimate, eclass byable(recall)
                 global S_BADRC
         }
         ereturn local title  "`title'"
-        ereturn local depvar `y1' `y2'
         ereturn local offset `offset'
-
-/* Double save in S_E_. */
-
-        global S_E_nobs `e(N)'
-        global S_E_depv `e(depvar)'
-        global S_E_ll   `e(ll)'
-        global S_E_sig  `e(sigma)'
-        global S_E_sesg `e(se_sigma)'
-
-        global S_E_ll0  `e(ll_0)'
-        global S_E_chi2 `e(chi2)'
-        global S_E_mdf  `e(df_m)'
-
-        ereturn local ml_score intrg_ll2
-        ereturn local cmd "gintreg"
-        global S_E_cmd `e(cmd)'
         
+        if ("`gini'"!="") {
+                if ("`rhs'`lnsigma'`p'`q'"!="") {
+                        di as error ///
+                        "gini not operational with independent variables"
+                }
+                else {
+                if ("`distribution'"=="weibull") {
+                        scalar sigma = exp(e(b)[1,"lnsigma:_cons"])
+                        local gini_coef = 1-(.5^(sigma))
+                }
+                else if ("`distribution'"=="gamma"} {
+                        scalar sigma = exp(e(b)[1,"lnsigma:_cons"])
+                        scalar p = e(b)[1,"p:_cons"]
+                        local gini_coef = exp(lngamma(p+.5)) ///
+                        / (exp(lngamma(p+1)) * sqrt(_pi))
+                }
+                else if inlist("`distribution'","br3","dagum") {
+                        scalar sigma = exp(e(b)[1,"lnsigma:_cons"])
+                        scalar p = e(b)[1,"p:_cons"]
+                        local gini_coef = ///
+                        [exp(lngamma(p)) * exp(lngamma(2*p+sigma))] ///
+                        / [exp(lngamma(p+sigma))*exp(lngamma(2*p))] - 1
+                }
+                else if inlist("`distribution'","br12","sm") {
+                        scalar sigma = exp(e(b)[1,"lnsigma:_cons"])
+                        scalar q = e(b)[1,"q:_cons"]
+                        local gini_coef = 1 - [exp(lngamma(q)) ///
+                        * exp(lngamma(2*q-sigma))] ///
+                        / [exp(lngamma(q-sigma)) * exp(lngamma(2*q))]
+                }
+                else di as err "gini not operational with dist(`distribution')"
+                ereturn scalar gini_coef = `gini_coef'
+                ereturn local gini "gini"
+                }
+        }
+
         * Clean up 
         constraint drop `auxconstr'
 
 /* Display results. */
 
         if "`display'" == "" {
-                DiGintreg, level(`level') `diopts' neq(`k_eq') // Jacob added neq() bc hetvars not reported elsewise. why?
+                DiGintreg, level(`level') `diopts' neq(`k_eq')
                 error `e(rc)'
         }
 end
@@ -505,6 +530,7 @@ program define DiGintreg
         _get_diopts diopts else, `options'
         version 9: ml display, level(`level') nofootnote `diopts' `else'
         _prefix_footnote
+        if ("`e(gini)'"=="gini") di "Gini coefficient: `e(gini_coef)'"
 
 /* Note:  Wald test for sigma on boundary -- not reported.*/
 
@@ -540,8 +566,7 @@ if !missing(e(N_lcout)) | !missing(e(N_rcout)) {
         */ "      This is an excellent approximation for all intervals " /*
         */ "except for those" _n "      that are very narrow."
 
-}  // if
-
+} 
 end
 
 program define GetDistOpts, rclass
@@ -654,7 +679,7 @@ program define GetDistOpts, rclass
                 local llf "intllf_gb2"
                 local auxnames "lnsigma p q"
         }
-        else if ("`1'"=="br12") {
+        else if inlist("`1'","br12","sm") {
                 local title "Burr-12 interval regression"
                 local llf "intllf_gb2"
                 local auxnames "lnsigma p q"
@@ -662,7 +687,7 @@ program define GetDistOpts, rclass
                 constraint define `r(free)' [p]_cons=1
                 local auxconstr "`r(free)'"
         }
-        else if ("`1'"=="br3") {
+        else if inlist("`1'","br3","dagum") {
                 local title "Burr-3 interval regression"
                 local llf "intllf_gb2"
                 local auxnames "lnsigma p q"

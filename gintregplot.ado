@@ -30,10 +30,10 @@ program define gintregplot, rclass
         // get predicted values for each parameter equation
         foreach eqn in model `e(auxnames)' {
                 tempvar `eqn'
-                _predict double ``eqn''_p in 1, eq(`eqn')
+                quietly _predict double ``eqn''_p in 1, eq(`eqn')
                 local `eqn' = ``eqn''_p[1]
         }
-        if inlist("`e(distribution)'","gb2","br12","br3","ggamma","gamma","weibull") {
+        if inlist("`e(distribution)'","gb2","br12","sm","br3","dagum","ggamma","gamma","weibull") {
                 local a = 1/exp(`lnsigma')
                 local b = exp(`model')
         }
@@ -51,13 +51,13 @@ program define gintregplot, rclass
                 local graphfn "`p'/[(2*exp(`lnsigma')*`q'^(1/`p')*`B')*(1+(abs(x-`model')^`p')/(`q'*exp(`lnsigma')^`p'*(1+`lambda'*sign(x-`model'))^`p'))^(`q'+1/`p')]"
         }
         else if inlist("`e(distribution)'","lognormal","lnormal") {
-                local graphfn "[exp(-ln(x))-`model')^2/2*exp(`lnsigma')^2] / sqrt(2*c(pi)*x*exp(`lnsigma'))"
+                local graphfn "[(exp(-ln(x))-`model')^2/2*exp(`lnsigma')^2] / sqrt(2*c(pi)*x*exp(`lnsigma'))"
         }
         else if inlist("`e(distribution)'","ggamma","gamma","weibull") {
                 local G = exp(lngamma(`p'))
                 local graphfn "[abs(`a')*(x/`b')^(`a'*`p')*exp(-(x/`b')^`a')]/[x*`G']"
         }
-        else if inlist("`e(distribution)'","gb2","br12","br3") {
+        else if inlist("`e(distribution)'","gb2","br12","sm","br3","dagum") {
                 local B =  exp(lngamma(`p')+lngamma(`q')-lngamma(`p'+`q'))
                 local graphfn "[abs(`a')*(x/`b')^(`a'*`p')]/[x*(`B')*(1+(x/`b')^`a')^(`p'+`q')]"
         }

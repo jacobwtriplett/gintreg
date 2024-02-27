@@ -10,8 +10,8 @@
 {viewerjumpto "Authors" "gintreg##authors"}{...}
 {title:Title}
 
-{p2colset 5 18 20 2}{...}
-{p2col:{cmd:gintreg} {hline 2}}Plot distribution fit by {cmd:gintreg}{p_end}
+{p2colset 5 22 20 2}{...}
+{p2col:{cmd:gintregplot} {hline 2}}Plot distribution fit by {cmd:gintreg}{p_end}
 
 
 {marker syntax}{...}
@@ -19,7 +19,7 @@
 
 {p 8 15 2}
 {cmd:gintregplot}
-[({it:stat})] {varlist} [ [({it:stat})] {it:...} ]
+[[({it:stat})] {varlist} ] [({it:stat}) {it:...} ]
 {ifin}
 [{cmd:,} {it:options}]
 
@@ -49,7 +49,7 @@ If {it:stat} is not specified, {opt mean} is assumed.
 {synoptline}
 {syntab :Options}
 {synopt :{opth hist(varname)}}overlay histogram of {varlist}{p_end}
-{synopt :{opth twoway_options}}}options for graph{p_end}
+{synopt :{it:{help twoway_options}}}options for graph{p_end}
 
 
 {marker description}{...}
@@ -67,20 +67,12 @@ or {opt mean} by default.
 
 {synoptset 15 tabbed}{...}
 {synopt :{opth hist(varname)}} overlay a histogram of {it:varname}; see {helpb histogram:[R] histogram}.{p_end} 
-{synopt :{helpb twoway_options}} control the look and other aspects of the graph drawn by {cmd:gintregplot}; {opt range(numlist)} recommended;
-see {helpb twoway_options:[G-3] twoway options}{p_end}
+{synopt :{helpb twoway_options}} control the look and other aspects of the graph drawn by {cmd:gintregplot};
+{opt range(numlist)} is recommended; see {helpb twoway_options:[G-3] twoway options}{p_end}
 
 
 {marker examples}{...}
 {title:Examples}
-
-{pstd}
-We have a dataset containing wages, truncated and in categories.  Some of
-the observations on wages are
-
-        wage1    wage2
-{p 8 27 2}20{space 7}25{space 6} meaning  20000 <= wages <= 25000{p_end}
-{p 8 27 2}50{space 8}.{space 6} meaning 50000 <= wages
 
 {pstd}Setup{p_end}
 {phang2}{cmd:. webuse intregxmpl}{p_end}
@@ -91,8 +83,8 @@ the observations on wages are
 {pstd}Draw graph with {it:indepvars} at {opt mean}{p_end}
 {phang2}{cmd:. gintregplot, range(0 60)}
 
-{pstd}Draw graph with select {it:indepvars} at {opt median}{p_end}
-{phang2}{cmd:. gintregplot (median) nev_mar rural, range(0 60)}
+{pstd}Draw graph with select {it:indepvars} at {opt median} or {opt max} (remaining {it:indepvars} at {opt mean} by default){p_end}
+{phang2}{cmd:. gintregplot (median) nev_mar rural (max) tenure, range(0 60)}
 
 {pstd}Compare fit of distributions visually{p_end}
 {phang2}{cmd:. gintreg wage1 wage2, dist(normal)}{p_end}
@@ -103,7 +95,7 @@ the observations on wages are
 {phang2}{cmd:. gintregplot, range(0 60)}{p_end}
 {phang2}{cmd:. local snormal `r(graphfn)'}{p_end}
 
-{phang2}{cmd:. graph twoway (function=`normal') (function=`snormal')}{p_end}
+{phang2}{cmd:. graph twoway (function y=`normal') (function y=`snormal')}{p_end}
 
 
 {marker results}{...}

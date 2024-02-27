@@ -1,4 +1,3 @@
-capture program drop gintreg_p
 program define gintreg_p
         syntax newvarname [if] [in] [, noOFFset]
 
@@ -44,7 +43,7 @@ program define gintreg_p
                 qui gen `predicted' = exp(`Xmodel')                           /*
                 */ *[exp(lngamma(`Xp'+`Xsigma'))/(exp(lngamma(`Xp')))] if `doit'
         }
-        else if inlist("`dist'","br3","br12","gb2") {
+        else if inlist("`dist'","br3","dagum","br12","sm","gb2") {
                 qui gen `predicted' = exp(`Xmodel')                           /*
                 */ *[exp(lngamma(`Xp'+`Xsigma'))*exp(lngamma(`Xq'-`Xsigma'))  /*
                 */ /(exp(lngamma(`Xp'))*exp(lngamma(`Xq')))]           if `doit'
