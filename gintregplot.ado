@@ -29,29 +29,31 @@ program define gintregplot, rclass
         
         // get predicted values for each parameter equation
         foreach eqn in model `e(auxnames)' {
-                tempvar `eqn'
-                quietly _predict double ``eqn''_p in 1, eq(`eqn')
-                local `eqn' = ``eqn''_p[1]
+                tempvar `eqn'_p
+                quietly _predict double ``eqn'_p' in 1, eq(`eqn')
+                local `eqn' = ``eqn'_p'[1]
         }
+        if ("`lnsigma'"!="") local sigma = exp(`lnsigma')
+        if ("`lambda'"!="") local lambda = tanh(`lambda')
         if inlist("`e(distribution)'","gb2","br12","sm","br3","dagum","ggamma","gamma","weibull") {
-                local a = 1/exp(`lnsigma')
+                local a = 1/`sigma'
                 local b = exp(`model')
         }
         
         // get graph function
         if inlist("`e(distribution)'","","normal") {
-                local graphfn "normalden(x,`model',exp(`lnsigma'))"
+                local graphfn "normalden(x,`model',`sigma')"
         }
-        else if inlist("`e(distribution)'","sged","ged","slaplce","laplace","snormal") {
+        else if inlist("`e(distribution)'","sged","ged","slaplace","laplace","snormal") {
                 local G = exp(lngamma(1/`p'))
-                local graphfn "[`p'*exp(-(abs(x-`model')^`p'/((1+`lambda'*sign(x-`model'))^`p'*exp(`lnsigma')^`p')))] / [2*exp(`lnsigma')*`G']"
+                local graphfn "[`p'*exp(-(abs(x-`model')^`p'/((1+`lambda'*sign(x-`model'))^`p'*`sigma'^`p')))] / [2*`sigma'*`G']"
         }
         else if inlist("`e(distribution)'","sgt","st","gt","t") {
                 local B = exp(lngamma(1/`p')+lngamma(`q')-lngamma(1/`p'+`q'))
-                local graphfn "`p'/[(2*exp(`lnsigma')*`q'^(1/`p')*`B')*(1+(abs(x-`model')^`p')/(`q'*exp(`lnsigma')^`p'*(1+`lambda'*sign(x-`model'))^`p'))^(`q'+1/`p')]"
+                local graphfn "`p'/[(2*`sigma'*`q'^(1/`p')*`B')*(1+(abs(x-`model')^`p')/(`q'*`sigma'^`p'*(1+`lambda'*sign(x-`model'))^`p'))^(`q'+1/`p')]"
         }
         else if inlist("`e(distribution)'","lognormal","lnormal") {
-                local graphfn "[(exp(-ln(x))-`model')^2/2*exp(`lnsigma')^2] / sqrt(2*c(pi)*x*exp(`lnsigma'))"
+                local graphfn "[(exp(-ln(x))-`model')^2/2*`sigma'^2] / sqrt(2*c(pi)*x*`sigma')"
         }
         else if inlist("`e(distribution)'","ggamma","gamma","weibull") {
                 local G = exp(lngamma(`p'))

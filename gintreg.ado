@@ -260,7 +260,7 @@ program Estimate, eclass byable(recall)
                         }
                         quietly gintreg `i0'
                         if "`log'"=="" {
-                                di "`e(title)'" _n as text "converged in "    /*
+                                di as text "`e(title)'" _n "converged in "    /*
                                 */ as result "`e(ic)'" as text " iterations:" /*
                                 */ "  Log-likelihood = " as res %-20.5f `e(ll)'
                         }
@@ -700,7 +700,6 @@ program define GetDistOpts, rclass
                 error 198
         }
 
-	
 	return local title "`title'"
 	return local llf "`llf'"
         return local auxnames "`auxnames'"

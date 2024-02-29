@@ -24,6 +24,7 @@ program define gintreg_p
         }
         tempvar Xsigma
         qui gen double `Xsigma' = exp(`Xlnsigma') if `doit'
+        replace `Xlambda' = tanh(`Xlambda')
         
         tempvar predicted
         if inlist("`dist'","snormal","laplace","slaplace","ged","sged") {
