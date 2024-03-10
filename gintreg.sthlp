@@ -45,7 +45,6 @@
 {synoptline}
 {syntab :Model}
 {synopt :{opth dist:ribution(gintreg##distname:distname)}}specify distribution; default is {cmd:dist(normal)}{p_end}
-{synopt :{opt nocons:tant}}suppress constant term of model equation{p_end}
 {synopt :{cmdab:lnsigma(}{varlist} [{cmd:,} {opt nocons:tant}]{cmd:)}}independent
 variables to model the variance; use {opt noconstant} to suppress constant
 term{p_end}
@@ -60,6 +59,7 @@ variables to model the shape; use {opt noconstant} to suppress constant
 term{p_end}
 {synopt :{opth off:set(varname)}}include {it:varname} in model with coefficient
 constrained to 1{p_end}
+{synopt :{opt nocons:tant}}suppress constant term of model equation{p_end}
 {synopt :{cmdab:const:raints(}{it:{help estimation options##constraints():constraints}}{cmd:)}}apply specified linear constraints{p_end}
 
 {syntab :SE/Robust}
@@ -75,6 +75,7 @@ unit {varname}{p_end}
 {synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}
 {p_end}
 {synopt :{opt nocnsr:eport}}do not display constraints{p_end}
+{synopt :{opt notransform}}do not display transformed coefficients{p_end}
 {synopt :{it:{help gintreg##display_options:display_options}}}control
 INCLUDE help shortdes-displayoptall
 
@@ -149,8 +150,6 @@ latent variable {it:y} are observed, {it:X} is a vector of explanatory variables
 with a corresponding coefficient vector {it:b} and the random disturbance {it:u}
 is assumed to be independently and identically distributed according to the 
 specified distribution.
-
-{pstd}
 Let {it:U} and {it:L} denote the upper and lower thresholds of {it:y}, F denote
 the cumulative density function (CDF) of the random disturbances, and {it:theta}
 denote a vector of distributional parameters.  Then,
@@ -165,7 +164,7 @@ Pr({it:L} <= {it:y} <= {it:U}}) = F({it:eps = U - Xb: theta}) - F({it:eps = L - 
 
 {phang}
 {opth dist:ribution(gintreg##distname:distname)} specifies the distribution of 
-the random disturbances.
+interest.
 
 {phang}
 {opt noconstant}; see 
@@ -173,25 +172,25 @@ the random disturbances.
 
 {phang}
 {cmd:lnsigma(}{varlist}[{opt , noconstant}]{cmd:)} specifies that
-the natural logarithm of the parameter {bf:sigma} be modeled as a linear combination
+the natural logarithm of the parameter {bf:sigma} be modeled as a linear function
 of {it:varlist}.  The constant is included unless {cmd:noconstant} is
 specified.
 
 {phang}
 {cmd:lambda(}{varlist}[{opt , noconstant}]{cmd:)} specifies that
-the hyperbolic tangent of the parameter {bf:lambda} be modeled as a linear combination
+the hyperbolic tangent of the parameter {bf:lambda} be modeled as a linear function
 of {it:varlist}.  The constant is included unless {cmd:noconstant} is
 specified.
 
 {phang}
 {cmd:p(}{varlist}[{opt , noconstant}]{cmd:)} specifies that
-the parameter {bf:p} be modeled as a linear combination
+the parameter {bf:p} be modeled as a linear function
 of {it:varlist}.  The constant is included unless {cmd:noconstant} is
 specified.
 
 {phang}
 {cmd:q(}{varlist}[{opt , noconstant}]{cmd:)} specifies that
-the parameter {bf:q} be modeled as a linear combination
+the parameter {bf:q} be modeled as a linear function
 of {it:varlist}.  The constant is included unless {cmd:noconstant} is
 specified.
 
@@ -215,6 +214,20 @@ INCLUDE help vce_asymptall
 {opt gini} computes, reports, and returns the Gini Inequality Index.  It is only
 operational with these distributions: {it:weibull, gamma, br3, br12}.  To find
 the Gini Inequality Index of a GB2 distribution, see {cmd:gb2dist} on {cmd:ssc}.{p_end}
+     
+{phang}
+{opt notransform} suppresses the display of transformed coefficients, otherwise 
+displayed as additional rows to the coefficent table when the corresponding 
+untransformed estimate is {bf:not} a function of {it:indepvars}. These are:
+
+{phang2}
+{bf:sigma}{space 2}= exp(lnsigma); transform lnsigma back to sigma (estimation in the log metric in improves convergence){p_end}
+{phang2}
+{bf:lambda} = tanh(lambda); map lambda (estimated as a linear function) to [-1,1]{p_end}
+{phang2}
+{bf:a}{space 6}= exp(lnsigma); a,b parameterization for distributions in the GB2 family{p_end}
+{phang2}
+{bf:b}{space 6}= 1/exp(delta); a,b parameterization for distributions in the GB2 family{p_end}
 
 {phang}
 {opt level(#)}, {opt nocnsreport}; see
@@ -251,17 +264,14 @@ see {helpb maximize:[R] Maximize}.  These options are seldom used.
 Setting the optimization type to {cmd:technique(bhhh)} resets the default
 {it:vcetype} to {cmd:vce(opg)}.
 
-{pstd}
-The following options are available with {opt gintreg} but are not shown in the
-dialog box:
-
-{phang}
-{opt collinear}, {opt coeflegend}; see
-     {helpb estimation options:[R] Estimation options}.
-
      
 {marker remarks}{...}
 {title:Remarks}
+
+{pstd}
+[TODO: warn of flexibility and describe conventions to determine correct/best 
+specification. In particular, describe when {cmd:lrtest} or {cmd:estat ic} 
+is appropriate and when it is not]
 
 {pstd}
 If convergence is slow or not being achieved, try using the options {opt diff:icult} 
@@ -278,7 +288,7 @@ convergence issues.
 {it:depvar2} estimated by {cmd:gintreg}.{p_end}
 
 {pstd}
-{helpb predict} obtains linear predictions using all parameter equations estimated by 
+{cmd:predict} obtains linear predictions using all parameter equations estimated by 
 {cmd:gintreg} with the following syntax:
         
         {cmd:predict} [{help type}] {newvar} {ifin} [, {help predict##options:noOFFset}]
@@ -311,10 +321,9 @@ INCLUDE help post_testnl
 {phang}(If you are interested in discussing these or others, feel free to {help gintreg##authors:contact me})
 
 {p2colset 8 12 12 2}{...}
-{p2col: -}Incorporate score equations into log-likelihood files; this would improve convergence and enable many useful postestimation features{p_end}
+{p2col: -}Incorporate score equations into log-likelihood files; this would improve convergence and enable more postestimation features{p_end}
 {p2col: -}More postestimation commands (lincom, margins, suest, hausman){p_end}
 {p2colreset}{...}
-
 
 
 {marker examples}{...}
@@ -331,15 +340,29 @@ the observations on wages are
 {pstd}Setup{p_end}
 {phang2}{cmd:. webuse intregxmpl}{p_end}
 
-{pstd}GB2 interval regression using Burr3 to find starting values{p_end}
-{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure,}
-           {cmd:dist(gb2) from(br3)}
+{pstd}Fit interval data to a skewed t distribution{p_end}
+{phang2}{cmd:. gintreg wage1 wage2, dist(st)}{p_end}
+{phang2}{cmd:. gintregplot, range(0 60)}
 
-{pstd}Same as above, but with heteroskedasticity in lnsigma{p_end}
-{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure,}
-           {cmd:dist(gb2) from(br3) lnsimga(age age2 nev_mar rural school tenure)}
+{pstd}Likelihood-ratio test to determine improvement of GED over normal{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(normal)}{p_end}
+{phang2}{cmd:. estimates store normal}{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(ged)}{p_end}
+{phang2}{cmd:. lrtest . normal}{p_end}
+
+{pstd}Using information criterion to compare goodness-of-fit between non-nested models{p_end}
+{phang2}{cmd:. gintreg wage1 wage2, dist(normal) nolog nodisplay}{p_end}
+{phang2}{cmd:. estat ic}{p_end}
+{phang2}{cmd:. gintreg wage1 wage2, dist(lognormal) nolog nodisplay}{p_end}
+{phang2}{cmd:. estat ic}{p_end}
+
+{pstd}GB2 interval regression using a Burr 3 to find starting values{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(gb2) from(br3)}
+
+{pstd}GB2 interval regression with heteroskedasticity in all parameters (delta,lnsigma,p,q), using a lognormal to find starting values{p_end}
+{phang2}{cmd:. local x age age2 nev_mar rural school tenure}{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 `x', lnsimga(`x') p(`x') q(`x') dist(gb2) from(lognormal)}
  
-
 
 {marker results}{...}
 {title:Stored results}

@@ -62,7 +62,7 @@ program Estimate, eclass byable(recall)
         */      lambda(string)          /* gintreg
         */      gini                    /* gintreg
         */      CRITTYPE(passthru)      /*
-        */      Verbose                 /*
+        */      NOTRANSform             /* 
         */      moptobj(passthru)       /* NOT DOCUMENTED
         */      *                       /*
         */      ]
@@ -213,13 +213,7 @@ program Estimate, eclass byable(recall)
                 }
                 local ++i
         }
-
-        // alternate notation for gb2 tree (except lognormal)
-        if ("`family'"=="gb2" & !inlist("`distribution'","lognormal","lnormal")) {
-                if ("`lnsigma'"=="")    local diparm diparm(lnsigma, function(exp(-@)) derivative(-exp(-@)) label("a"))
-                if ("`rhs'"=="")        local diparm `diparm' diparm(model, exp label("b"))
-        }
-                
+        
         foreach aux of local auxnames {
                 // remove collinearity from auxillary equations...
                 if ("``aux''"!="") {
@@ -233,12 +227,24 @@ program Estimate, eclass byable(recall)
                         local diparm `diparm' diparm(lnsigma, exp label("sigma"))
                 }
                 else if ("`aux'"=="lambda") { 
-                        local diparm `diparm' diparm(lambda, tanh)
+                        local diparm `diparm' diparm(lambda, tanh label("tanh(lambda)"))
                 }
                         
                 local auxeq `auxeq' (`aux': ``aux'_var', ``aux'_nocns') // full model 
                 local auxeq_cns `auxeq_cns' (`aux':)                    // constant only
         }
+        
+        // alternate notation for gb2 tree (except lognormal)
+        if ("`family'"=="gb2" & !inlist("`distribution'","lognormal","lnormal")) {
+                if inlist("","`lnsigma'","`rhs'") {
+                        local diparm `diparm' diparm(__sep__) diparm(__lab__, label(alt notation) comment(a,b parameterization of distributions in GB2 family))
+                        if ("`lnsigma'"=="") ///
+                        local diparm `diparm' diparm(lnsigma, function(exp(-@)) derivative(-exp(-@)) label("a"))
+                        if ("`rhs'"=="") ///
+                        local diparm `diparm' diparm(model, exp label("b"))
+                }
+        }
+        if ("`notransform'"!="") local diparm // erase `diparm' if 'notransform' specified
 
 /* Starting values */
         
@@ -287,6 +293,10 @@ program Estimate, eclass byable(recall)
         else if "`lnsigma'`p'`q'`lambda'" == "" {
 
 /* Generate variable `z' to get starting values. */
+
+                if "`constraints'`from'"=="" & "`offset'"!="" {
+                        local moff "-`offset'"
+                }
 
                 qui gen double `z' =                      ///
                         cond(`y1'<.&`y2'<.,(`y1'+`y2')/2, ///
@@ -416,8 +426,6 @@ program Estimate, eclass byable(recall)
                 */ `negh'                               /*
                 */ `moptobj'
 
-        ereturn local cmd "gintreg"
-
         ereturn scalar N_unc = `Nunc'
         ereturn scalar N_lc  = `Nlc'
         ereturn scalar N_rc  = `Nrc'
@@ -513,7 +521,9 @@ program Estimate, eclass byable(recall)
 /* Display results. */
 
         if "`display'" == "" {
+                ereturn local cmd "intreg" // trick ml_display into displaying obs types (doesn't work for -replay-)
                 DiGintreg, level(`level') `diopts' neq(`k_eq')
+                ereturn local cmd "gintreg"
                 error `e(rc)'
         }
 end
