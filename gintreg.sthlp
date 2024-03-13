@@ -134,7 +134,7 @@ available after estimation.{p_end}
 {pstd}
 {cmd:gintreg} fits a linear model with a possibly nonnormal disturbance and with an outcome measured as
 point data, interval data, left-censored data, or right-censored data.  As
-such, it is a generalization of the models fit by {helpb intreg} and yields
+such, it is a generalization of the models fit by {helpb intreg} and {helpb stintreg}. {cmd:gintreg} yields
 identical estimates to {helpb intreg} when the normal distribution is specified.  
 Unlike {cmd: intreg}, {cmd: gintreg} allows the underlying variable of interest
 to be distributed according to a more general distribution.  
@@ -151,7 +151,7 @@ with a corresponding coefficient vector {it:b} and the random disturbance {it:u}
 is assumed to be independently and identically distributed according to the 
 specified distribution.
 Let {it:U} and {it:L} denote the upper and lower thresholds of {it:y}, F denote
-the cumulative density function (CDF) of the random disturbances, and {it:theta}
+the [conditional] cumulative distribution function (CDF) of {it:y}, and {it:theta}
 denote a vector of distributional parameters.  Then,
 the conditional probability that {it:y} is in the interval ({it:L,U}) is:
 Pr({it:L} <= {it:y} <= {it:U}}) = F({it:eps = U - Xb: theta}) - F({it:eps = L - Xb: theta}).
@@ -216,18 +216,18 @@ operational with these distributions: {it:weibull, gamma, br3, br12}.  To find
 the Gini Inequality Index of a GB2 distribution, see {cmd:gb2dist} on {cmd:ssc}.{p_end}
      
 {phang}
-{opt notransform} suppresses the display of transformed coefficients, otherwise 
-displayed as additional rows to the coefficent table when the corresponding 
-untransformed estimate is {bf:not} a function of {it:indepvars}. These are:
+{opt notransform} suppresses the display of transformed coefficients, which are
+otherwise displayed in additional rows to the coefficent table when the coefficient
+is {bf:not} a function of {it:indepvars}. These are:
 
 {phang2}
 {bf:sigma}{space 2}= exp(lnsigma); transform lnsigma back to sigma (estimation in the log metric in improves convergence){p_end}
 {phang2}
 {bf:lambda} = tanh(lambda); map lambda (estimated as a linear function) to [-1,1]{p_end}
 {phang2}
-{bf:a}{space 6}= exp(lnsigma); a,b parameterization for distributions in the GB2 family{p_end}
+{bf:a}{space 6}= 1/exp(lnsigma); a,b parameterization for distributions in the GB2 family{p_end}
 {phang2}
-{bf:b}{space 6}= 1/exp(delta); a,b parameterization for distributions in the GB2 family{p_end}
+{bf:b}{space 6}= exp(delta); a,b parameterization for distributions in the GB2 family{p_end}
 
 {phang}
 {opt level(#)}, {opt nocnsreport}; see

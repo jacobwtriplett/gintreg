@@ -48,7 +48,7 @@ If {it:stat} is not specified, {opt mean} is assumed.
 {synopthdr}
 {synoptline}
 {syntab :Options}
-{synopt :{opth hist(varname)}}overlay histogram of {varlist}{p_end}
+{synopt :{opth hist(varname)}}overlay histogram of {varname}{p_end}
 {synopt :{it:{help twoway_options}}}options for graph{p_end}
 
 
@@ -59,7 +59,6 @@ If {it:stat} is not specified, {opt mean} is assumed.
 {cmd:gintregplot} draws the conditional distribution of {it:depvar1} and 
 {it:depvar2} estimated by {helpb gintreg}.  {it:indepvars} are taken at {it:stat}
 or {opt mean} by default.
-
 
 
 {marker options}{...}
@@ -86,7 +85,20 @@ or {opt mean} by default.
 {pstd}Draw graph with select {it:indepvars} at {opt median} or {opt max} (remaining {it:indepvars} at {opt mean} by default){p_end}
 {phang2}{cmd:. gintregplot (median) nev_mar rural (max) tenure, range(0 60)}
 
-{pstd}Compare fit of distributions visually{p_end}
+{pstd}Draw graph for selected observation(s){p_end}
+{phang2}{cmd:. gintregplot if (age<30), range(0 60)}{p_end}
+{phang2}{cmd:. gintregplot in 100, range(0 60)}{p_end}
+
+{pstd}Compare income distributions for rural and urban workers{p_end}
+{phang2}{cmd:. gintregplot (min) rural, range(0 60)}{p_end}
+{phang2}{cmd:. local urban `r(graphfn)'}{p_end}
+
+{phang2}{cmd:. gintregplot (max) rural, range(0 60)}{p_end}
+{phang2}{cmd:. local rural `r(graphfn)'}{p_end}
+
+{phang2}{cmd:. graph twoway (function y=`urban') (function y=`rural')}{p_end}
+
+{pstd}Compare fit of two distributions visually{p_end}
 {phang2}{cmd:. gintreg wage1 wage2, dist(normal)}{p_end}
 {phang2}{cmd:. gintregplot, range(0 60)}{p_end}
 {phang2}{cmd:. local normal `r(graphfn)'}{p_end}
@@ -115,3 +127,8 @@ or {opt mean} by default.
 {pstd}Jacob Triplett{p_end}
 {pstd}Carnegie Mellon University{p_end}
 {pstd}jacobtri@andrew.cmu.edu{p_end}
+
+{pstd}James B. McDonald{p_end}
+{pstd}Brigham Young University{p_end}
+{pstd}james_mcdonald@byu.edu{p_end}
+

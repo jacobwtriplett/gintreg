@@ -229,7 +229,6 @@ program Estimate, eclass byable(recall)
                 else if ("`aux'"=="lambda") { 
                         local diparm `diparm' diparm(lambda, tanh label("tanh(lambda)"))
                 }
-                        
                 local auxeq `auxeq' (`aux': ``aux'_var', ``aux'_nocns') // full model 
                 local auxeq_cns `auxeq_cns' (`aux':)                    // constant only
         }
