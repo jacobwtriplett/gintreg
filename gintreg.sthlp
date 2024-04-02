@@ -44,7 +44,7 @@
 {synopthdr}
 {synoptline}
 {syntab :Model}
-{synopt :{opth dist:ribution(gintreg##distname:distname)}}specify distribution; default is {cmd:dist(normal)}{p_end}
+{synopt :{opth dist:ribution(gintreg##distname:distname)}}specify distribution; default is {opt dist:ribution(normal)}{p_end}
 {synopt :{cmdab:lnsigma(}{varlist} [{cmd:,} {opt nocons:tant}]{cmd:)}}independent
 variables to model the variance; use {opt noconstant} to suppress constant
 term{p_end}
@@ -221,7 +221,7 @@ otherwise displayed in additional rows to the coefficent table when the coeffici
 is {bf:not} a function of {it:indepvars}. These are:
 
 {phang2}
-{bf:sigma}{space 2}= exp(lnsigma); transform lnsigma back to sigma (estimation in the log metric in improves convergence){p_end}
+{bf:sigma}{space 2}= exp(lnsigma); transform lnsigma back to sigma (estimated in the log metric to improve convergence){p_end}
 {phang2}
 {bf:lambda} = tanh(lambda); map lambda (estimated as a linear function) to [-1,1]{p_end}
 {phang2}
@@ -267,11 +267,6 @@ Setting the optimization type to {cmd:technique(bhhh)} resets the default
      
 {marker remarks}{...}
 {title:Remarks}
-
-{pstd}
-[TODO: warn of flexibility and describe conventions to determine correct/best 
-specification. In particular, describe when {cmd:lrtest} or {cmd:estat ic} 
-is appropriate and when it is not]
 
 {pstd}
 If convergence is slow or not being achieved, try using the options {opt diff:icult} 
@@ -322,12 +317,16 @@ INCLUDE help post_testnl
 
 {p2colset 8 12 12 2}{...}
 {p2col: -}Incorporate score equations into log-likelihood files; this would improve convergence and enable more postestimation features{p_end}
-{p2col: -}More postestimation commands (lincom, margins, suest, hausman){p_end}
+{p2col: -}More postestimation commands (margins, suest, hausman){p_end}
 {p2colreset}{...}
 
 
 {marker examples}{...}
 {title:Examples}
+
+{pstd}
+Compare this example to the example in {helpb intreg##examples:help intreg} to 
+illustrate {cmd:gintreg}'s potential advantages derived from its flexibility.
 
 {pstd}
 We have a dataset containing wages, truncated and in categories.  Some of
