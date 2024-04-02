@@ -10,6 +10,7 @@ f gintreg.ado
 f gintreg.sthlp
 f gintreg_p.ado
 f gintregplot.ado
+f gintregplot.sthlp
 f intllf_gb2.ado
 f intllf_ggamma.ado
 f intllf_lognormal.ado
