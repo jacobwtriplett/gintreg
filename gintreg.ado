@@ -63,7 +63,6 @@ program Estimate, eclass byable(recall)
         */      gini                    /* gintreg
         */      CRITTYPE(passthru)      /*
         */      NOTRANSform             /* 
-        */      moptobj(passthru)       /* NOT DOCUMENTED
         */      *                       /*
         */      ]
 
