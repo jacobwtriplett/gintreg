@@ -71,16 +71,17 @@ or {opt jack:knife}{p_end}
 unit {varname}{p_end}
 
 {syntab :Reporting}
-{synopt :{opt gini}}display gini coefficient; operable with {opt dist:ribution(weibull | gamma | br3 | br12)}{p_end}
-{synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}
-{p_end}
+{synopt :{opt gini}}display gini coefficient of a model without {it:indepvars} 
+and is operable with {opt dist:ribution(weibull | gamma | br3 | br12)}{p_end}
+{synopt :{opt notran:sform}}do not display transformed coefficients{p_end}
 {synopt :{opt nocnsr:eport}}do not display constraints{p_end}
-{synopt :{opt notransform}}do not display transformed coefficients{p_end}
+{synopt :{opt l:evel(#)}}set confidence level; default is {cmd:level(95)}{p_end}
 {synopt :{it:{help gintreg##display_options:display_options}}}control
 INCLUDE help shortdes-displayoptall
 
 {syntab :Maximization}
-{synopt :{opt from(distname | init_specs)}}if {it:distname}, use {cmd:gintreg} with {opt dist:ribution(distname)} to find starting values; if {it:init_specs}, see {it:{help gintreg##maximize_options:maximize_options}}{p_end}
+{synopt :{opt initiald(distname)}}use {cmd:gintreg} with {opt dist:ribution(distname)} to find starting values{p_end}
+{synopt :{opt from(init_specs)}}set initial parameter values; see {it:{help gintreg##maximize_options:maximize_options}}{p_end}
 {synopt :{it:{help gintreg##maximize_options:maximize_options}}}control the maximization process; seldom used{p_end}
 
 {synopt:{opt col:linear}}keep collinear variables{p_end}
@@ -154,6 +155,8 @@ Let {it:U} and {it:L} denote the upper and lower thresholds of {it:y}, F denote
 the [conditional] cumulative distribution function (CDF) of {it:y}, and {it:theta}
 denote a vector of distributional parameters.  Then,
 the conditional probability that {it:y} is in the interval ({it:L,U}) is:
+
+{phang2}
 Pr({it:L} <= {it:y} <= {it:U}}) = F({it:eps = U - Xb: theta}) - F({it:eps = L - Xb: theta}).
 
 
@@ -211,12 +214,13 @@ INCLUDE help vce_asymptall
 {dlgtab:Reporting}
 
 {phang}
-{opt gini} computes, reports, and returns the Gini Inequality Index.  It is only
-operational with these distributions: {it:weibull, gamma, br3, br12}.  To find
-the Gini Inequality Index of a GB2 distribution, see {cmd:gb2dist} on {cmd:ssc}.{p_end}
+{opt gini} computes, reports, and returns the Gini Inequality Index.  It requires
+there to be no {it:indepvars} and is only operational with these distributions: 
+{it:weibull, gamma, br3, br12}.  To find the Gini Inequality Index of a GB2 
+distribution, see {cmd:gb2dist} on {cmd:ssc}.{p_end}
      
 {phang}
-{opt notransform} suppresses the display of transformed coefficients, which are
+{opt notran:sform} suppresses the display of transformed coefficients, which are
 otherwise displayed in additional rows to the coefficent table when the coefficient
 is {bf:not} a function of {it:indepvars}. These are:
 
@@ -230,7 +234,7 @@ is {bf:not} a function of {it:indepvars}. These are:
 {bf:b}{space 6}= exp(delta); a,b parameterization for distributions in the GB2 family{p_end}
 
 {phang}
-{opt level(#)}, {opt nocnsreport}; see
+{opt level(#)}, {opt nocnsr:eport}; see
      {helpb estimation options:[R] Estimation options}.
 
 INCLUDE help displayopts_list
@@ -239,7 +243,11 @@ INCLUDE help displayopts_list
 {dlgtab:Maximization}
 
 {phang}
-{opt from(distname | init_specs)} can assist in the maximization process by 
+{opt initiald(distaname)} can assist in the maximization process by estimating a
+simpler distribution to find starting values.{p_end}
+
+{phang}
+{opt from(init_specs)} can assist in the maximization process by manually 
 providing starting values for the vector of estimates.{p_end}
 
 {phang}
@@ -247,7 +255,7 @@ providing starting values for the vector of estimates.{p_end}
 {opt dif:ficult},
 {opth tech:nique(maximize##algorithm_spec:algorithm_spec)},
 {opt iter:ate(#)},
-[{cmd:no}]{opt log},
+{opt nolog},
 {opt tr:ace},
 {opt grad:ient},
 {opt showstep},
@@ -255,9 +263,8 @@ providing starting values for the vector of estimates.{p_end}
 {opt showtol:erance},
 {opt tol:erance(#)},
 {opt ltol:erance(#)},
-{opt nrtol:erance(#)},
-{opt nonrtol:erance}, and
-{opt from(init_specs)};
+{opt nrtol:erance(#)}, and
+{opt nonrtol:erance};
 see {helpb maximize:[R] Maximize}.  These options are seldom used.
 
 {pmore}
@@ -269,10 +276,10 @@ Setting the optimization type to {cmd:technique(bhhh)} resets the default
 {title:Remarks}
 
 {pstd}
-If convergence is slow or not being achieved, try using the options {opt diff:icult} 
-and/or {opth from:(gintreg##distname:distname)}, where 
-{it:{help gintreg##distname:distname}} is a nested distribution of the one with
-convergence issues. 
+If convergence is slow or not being achieved, try using the options 
+{opth initiald:(gintreg##distname:distname)}, {opt diff:icult}, and/or 
+{opt tech:nique(algorithm_spec)}, where {it:{help gintreg##distname:distname}} 
+is a nested distribution of the one with convergence issues. 
 
 
 {marker postestimation}{...}
@@ -347,7 +354,7 @@ the observations on wages are
 {phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(normal)}{p_end}
 {phang2}{cmd:. estimates store normal}{p_end}
 {phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(ged)}{p_end}
-{phang2}{cmd:. lrtest . normal}{p_end}
+{phang2}{cmd:. lrtest normal .}{p_end}
 
 {pstd}Using information criterion to compare goodness-of-fit between non-nested models{p_end}
 {phang2}{cmd:. gintreg wage1 wage2, dist(normal) nolog nodisplay}{p_end}
@@ -355,12 +362,15 @@ the observations on wages are
 {phang2}{cmd:. gintreg wage1 wage2, dist(lognormal) nolog nodisplay}{p_end}
 {phang2}{cmd:. estat ic}{p_end}
 
+{pstd}Compute the Gini inequality index of using a Weibull distrubution{p_end}
+{phang2}{cmd:. gintreg wage1 wage2, dist(weibull) gini}{p_end}
+
 {pstd}GB2 interval regression using a Burr 3 to find starting values{p_end}
-{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(gb2) from(br3)}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(gb2) initiald(br3)}
 
 {pstd}GB2 interval regression with heteroskedasticity in all parameters (delta,lnsigma,p,q), using a lognormal to find starting values{p_end}
 {phang2}{cmd:. local x age age2 nev_mar rural school tenure}{p_end}
-{phang2}{cmd:. gintreg wage1 wage2 `x', lnsimga(`x') p(`x') q(`x') dist(gb2) from(lognormal)}
+{phang2}{cmd:. gintreg wage1 wage2 `x', lnsigma(`x') p(`x') q(`x') dist(gb2) initiald(lognormal)}
  
 
 {marker results}{...}

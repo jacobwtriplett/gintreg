@@ -1,4 +1,4 @@
-*! version 3.0  26feb2024
+*! version 3.1  21may2024
 program define gintreg, eclass byable(onecall) ///
                         prop(svyb svyj svyr swml bayes)
         if _by() {
@@ -40,14 +40,15 @@ program Estimate, eclass byable(recall)
                 local vv : di "version " string(max(11,_caller())) ", missing:"
         }
         version 8.1, missing
-/* Parse and check options. */
 
+/* Parse syntax and get distribution- and parameter-specific macros. */
+        
         syntax  varlist(min=2 numeric fv ts)    /*
         */      [aw fw pw iw] [if] [in]         /*
         */      [,                              /*
         */      DISTribution(string)            /* gintreg
         */      Level(cilevel)                  /*
-        */      NOLOg LOg                       /*
+        */      NOLOg                           /*
         */      OFFset(varname numeric)         /*
         */      noCONstant                      /*
         */      Robust                  /*
@@ -55,7 +56,8 @@ program Estimate, eclass byable(recall)
         */      VCE(passthru)           /*
         */      noDISPLAY               /*
         */      CONSTraints(string)     /*
-        */      FROM(string)            /* +gintreg
+        */      from(string)            /*
+        */      initiald(string)        /* gintreg
         */      lnsigma(string)         /* gintreg
         */      p(string)               /* gintreg 
         */      q(string)               /* gintreg 
@@ -81,7 +83,7 @@ program Estimate, eclass byable(recall)
         local vce `"`r(vceopt)'"'
 
         _get_diopts diopts options, `options'
-        mlopts mlopts, `options' const(`constraints' `auxconstr') `log' `nolog'
+        mlopts mlopts, `options' const(`constraints' `auxconstr') `nolog'
         local coll `s(collinear)'
         local mlopts `mlopts' `crittype'
 
@@ -124,9 +126,15 @@ program Estimate, eclass byable(recall)
                 local family "sgt"
         } 
         else    local family "gb2"
+        
+        if ("`initiald'"!="" & "`from'"!="") {
+                di as err /*
+                */ "options initiald() and from() cannot both be specified"
+                exit 100
+        }
 
-/* Mark/markout. */
-
+/* Markout. */
+        
         tempvar doit z
 
         mark `doit' [`weight'`exp'] `if' `in'
@@ -135,8 +143,6 @@ program Estimate, eclass byable(recall)
         if ("`family'"=="gb2") {
                 qui replace `doit' = 0 if (`y2'<=0)
         }
-
-/* Check that `y1'<=`y2' and markout independent variables. */
 
         capture assert `y1'<=`y2' if `y1'<. & `y2'<. & `doit'
         if _rc {
@@ -148,7 +154,7 @@ program Estimate, eclass byable(recall)
                 markout `doit' `cluster', strok
         }
 
-/* Index by data type; used in evaluator files */
+/* Index by data type (used in evaluator files). */
 
         tempvar idx
         qui gen byte `idx' =              ///
@@ -169,7 +175,7 @@ program Estimate, eclass byable(recall)
         _nobs `doit' [`weight'`exp'] if `y2'>=., min(0)
         local Nrc `r(N)'
 
-/* Remove collinearity. */
+/* Remove collinearity from indepvars. */
         
         fvexpand `rhs'
         local rhsorig `r(varlist)'      
@@ -213,7 +219,15 @@ program Estimate, eclass byable(recall)
                 local ++i
         }
         
+/* Remove collinearity and display transformed estimates of het. variables. */
+
         foreach aux of local auxnames {
+                
+                // (prep step for "report transformed parameters")
+                if ("``aux''"=="") & inlist("`aux'","lnsigma","lambda") {
+                        local diparm diparm(__lab__, label(transformed) comment(selected transformations of parameter estimates))
+                }
+                
                 // remove collinearity from auxillary equations...
                 if ("``aux''"!="") {
                         `vv' ///
@@ -244,50 +258,44 @@ program Estimate, eclass byable(recall)
         }
         if ("`notransform'"!="") local diparm // erase `diparm' if 'notransform' specified
 
-/* Starting values */
+/* Get starting values. */
         
-        if "`from'" != "" {
-                // fit preliminary model if from(distribution) specified...
-                if inlist("`from'","sged","ged","slaplace","laplace", ///
-                          "snormal","sgt","gt","st","t")              ///
-                   | inlist("`from'","gb2","br12","sm","br3","dagum", ///
-                            "ggamma","gamma","weibull")               /// 
-                   | inlist("`from'","","normal","lognormal","lnormal") { 
+        if ("`initiald'"!="") {
+                local i0 = subinstr("`0'","initiald(`initiald')","",1)
                 
-                        // remove from() option from cmd
-                        local i0 = subinstr("`0'","from(`from')","",.)
-                        // replace dist(`dist') with dist(`from')
-                        local i0 = subinstr("`i0'","(`distribution')","(`from')",1)
-                        
-                        if "`log'"=="" {
-                                di _n "Fitting model with `from' distribution:"
-                        }
-                        quietly gintreg `i0'
-                        if "`log'"=="" {
-                                di as text "`e(title)'" _n "converged in "    /*
-                                */ as result "`e(ic)'" as text " iterations:" /*
-                                */ "  Log-likelihood = " as res %-20.5f `e(ll)'
-                        }
-                        
-                        tempname b0 bp bq
-                        matrix `b0' = e(b)
-                        
-                        // override default initial value from 0 to 1 for p,q
-                        // ... if p,q not supplied by from(dist)
-                        foreach aux in "p" "q" { 
-                                if strpos("`auxnames'","`aux'") ///
-                                & !strpos("`e(auxnames)'","`aux'") {
-                                        matrix `b`aux'' = 1
-                                        matrix colnames `b`aux'' = `aux':_cons
-                                        matrix `b0' = (`b0', `b`aux'')
-                                }
-                        }
-                        local initopt "init(`b0', skip)"
+                // remove initiald() option from cmdline
+                local i0 = subinstr("`0'","initiald(`initiald')","",.)
+                // replace dist(`dist') with dist(`initiald')
+                local i0 = subinstr("`i0'","(`distribution')","(`initiald')",1)
+                
+                if "`nolog'"=="" {
+                        di _n "Fitting model with `initiald' distribution:"
                 }
-                // ... or pass through from() --> init()
-                else    local initopt "init(`from')"
+                quietly gintreg `i0'
+                if "`nolog'"=="" {
+                        di as text "`e(title)'" _n "converged in "    /*
+                        */ as result "`e(ic)'" as text " iterations:" /*
+                        */ "  Log-likelihood = " as res %-20.5f `e(ll)'
+                }
+                
+                tempname b0 bp bq
+                matrix `b0' = e(b)
+                
+                // override default initial value from 0 to 1 for p,q
+                // ... if p,q not supplied by from(dist)
+                foreach aux in "p" "q" { 
+                        if strpos("`auxnames'","`aux'") ///
+                        & !strpos("`e(auxnames)'","`aux'") {
+                                matrix `b`aux'' = 1
+                                matrix colnames `b`aux'' = `aux':_cons
+                                matrix `b0' = (`b0', `b`aux'')
+                        }
+                }
+                local initopt "init(`b0', skip)"
         }
-
+        else if ("`from'"!="") {
+                local initopt "init(`from')"
+        }
         else if "`lnsigma'`p'`q'`lambda'" == "" {
 
 /* Generate variable `z' to get starting values. */
@@ -333,16 +341,12 @@ program Estimate, eclass byable(recall)
                         }
                         matrix coleq `b0' = model
                         matrix `b0' = `b0' , `bs'
-                        *local initopt init(`b0', skip) // seems to work better with `continue' post-constantonly than with this active too. Maybe take this route only if `constant'~=noconstant ? (do by making THIS -if- block an -if else- block)
                 }
-
-                _parse_iterlog, `log' `nolog'
-                local log "`s(nolog)'"
 
 /* Fit constant-only model. */
 		
                 if ("`rhs'"!="" & "`constant'"=="") {
-                        if "`log'"=="" {
+                        if "`nolog'"=="" {
                                 di as txt _n "Fitting constant-only model:"
                         }
                         
@@ -393,7 +397,8 @@ program Estimate, eclass byable(recall)
         }
         
 /* Branch off for fitting full [constrained] model */
-        if "`log'"=="" {
+
+        if "`nolog'"=="" {
                 di _n as txt "Fitting full model:"
         }
         
@@ -424,6 +429,8 @@ program Estimate, eclass byable(recall)
                 */ `negh'                               /*
                 */ `moptobj'
 
+/* Returns. */
+                
         ereturn scalar N_unc = `Nunc'
         ereturn scalar N_lc  = `Nlc'
         ereturn scalar N_rc  = `Nrc'
@@ -510,9 +517,10 @@ program Estimate, eclass byable(recall)
                 else di as err "gini not operational with dist(`distribution')"
                 ereturn scalar gini_coef = `gini_coef'
                 ereturn local gini "gini"
-                }
         }
-
+        
+        }
+        
         * Clean up 
         constraint drop `auxconstr'
 
@@ -539,8 +547,6 @@ program define DiGintreg
         version 9: ml display, level(`level') nofootnote `diopts' `else'
         _prefix_footnote
         if ("`e(gini)'"=="gini") di "Gini coefficient: `e(gini_coef)'"
-
-/* Note:  Wald test for sigma on boundary -- not reported.*/
 
 if !missing(e(N_lcout)) | !missing(e(N_rcout)) {
 
