@@ -224,7 +224,7 @@ program Estimate, eclass byable(recall)
         foreach aux of local auxnames {
                 
                 // (prep step for "report transformed parameters")
-                if ("``aux''"=="") & inlist("`aux'","lnsigma","lambda") {
+                if ("``aux''"=="") & inlist("`aux'","lnsigma","lambda") & ("`diparm'"=="") {
                         local diparm diparm(__lab__, label(transformed) comment(selected transformations of parameter estimates))
                 }
                 

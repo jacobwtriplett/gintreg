@@ -350,11 +350,11 @@ the observations on wages are
 {phang2}{cmd:. gintreg wage1 wage2, dist(st)}{p_end}
 {phang2}{cmd:. gintregplot, range(0 60)}
 
-{pstd}Likelihood-ratio test to determine improvement of GED over normal{p_end}
-{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(normal)}{p_end}
+{pstd}Likelihood-ratio test to determine if the GED is an improvement over a normal distribution{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure}{p_end}
 {phang2}{cmd:. estimates store normal}{p_end}
 {phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, dist(ged)}{p_end}
-{phang2}{cmd:. lrtest normal .}{p_end}
+{phang2}{cmd:. lrtest . normal}{p_end}
 
 {pstd}Using information criterion to compare goodness-of-fit between non-nested models{p_end}
 {phang2}{cmd:. gintreg wage1 wage2, dist(normal) nolog nodisplay}{p_end}
@@ -371,7 +371,12 @@ the observations on wages are
 {pstd}GB2 interval regression with heteroskedasticity in all parameters (delta,lnsigma,p,q), using a lognormal to find starting values{p_end}
 {phang2}{cmd:. local x age age2 nev_mar rural school tenure}{p_end}
 {phang2}{cmd:. gintreg wage1 wage2 `x', lnsigma(`x') p(`x') q(`x') dist(gb2) initiald(lognormal)}
- 
+
+{pstd}Manually supply start values to interval regression{p_end}
+{phang2}{cmd:. regress wage1 age age2 nev_mar rural school tenure}{p_end}
+{phang2}{cmd:. mat b0 = (e(b),ln(e(rmse)))}{p_end}
+{phang2}{cmd:. gintreg wage1 wage2 age age2 nev_mar rural school tenure, from(b0, copy)}{p_end}
+
 
 {marker results}{...}
 {title:Stored results}
